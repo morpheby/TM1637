@@ -58,17 +58,16 @@ const uint8_t digitToSegment[] = {
 
 static const uint8_t minusSegments = 0b01000000;
 
-TM1637Display::TM1637Display(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay)
+TM1637Display::TM1637Display(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay, bool pullUp) :
+  m_pinClk { pinClk },
+  m_pinDIO { pinDIO },
+  m_bitDelay { bitDelay },
+  m_pullUp { pullUp }
 {
-	// Copy the pin numbers
-	m_pinClk = pinClk;
-	m_pinDIO = pinDIO;
-	m_bitDelay = bitDelay;
-
 	// Set the pin direction and default value.
 	// Both pins are set as inputs, allowing the pull-up resistors to pull them up
-    pinMode(m_pinClk, INPUT);
-    pinMode(m_pinDIO,INPUT);
+  pinMode(m_pinClk, m_pullUp ? INPUT_PULLUP : INPUT);
+  pinMode(m_pinDIO, m_pullUp ? INPUT_PULLUP : INPUT);
 	digitalWrite(m_pinClk, LOW);
 	digitalWrite(m_pinDIO, LOW);
 }
@@ -177,6 +176,56 @@ void TM1637Display::showNumberBaseEx(int8_t base, uint16_t num, uint8_t dots, bo
     setSegments(digits, length, pos);
 }
 
+void TM1637Display::showNumberText(const char *str) {
+  uint8_t segments[4] = {0, 0, 0, 0};
+
+  for (int i = 0; i < 4 && *str != 0; ++i, ++str) {
+    char c = *str;
+
+    if (c == ' ') {
+      segments[i] = 0;
+      continue;
+    }
+
+    if (c == '.') {
+      // Attach dot to the last digit
+      if (i > 0) {
+        segments[--i] |= 0x80;
+        continue;
+      } else {
+        // No last digit present
+        segments[i] = 0x80;
+        continue;
+      }
+    }
+
+    if (c == '-') {
+      segments[i] = minusSegments;
+      continue;
+    }
+
+    if (c >= '0' && c <= '9') {
+      segments[i] = encodeDigit(static_cast<uint8_t>(c - '0'));
+      continue;
+    }
+
+    // Support hex letters A-F / a-f as digits if needed
+    if (c >= 'A' && c <= 'F') {
+      segments[i] = encodeDigit(static_cast<uint8_t>(10 + (c - 'A')));
+      continue;
+    }
+    if (c >= 'a' && c <= 'f') {
+      segments[i] = encodeDigit(static_cast<uint8_t>(10 + (c - 'a')));
+      continue;
+    }
+
+    // Unknown character -> blank
+    segments[i] = 0;
+  }
+
+  setSegments(segments, 4, 0);
+}
+
 void TM1637Display::bitDelay()
 {
 	delayMicroseconds(m_bitDelay);
@@ -192,9 +241,9 @@ void TM1637Display::stop()
 {
 	pinMode(m_pinDIO, OUTPUT);
 	bitDelay();
-	pinMode(m_pinClk, INPUT);
+	pinMode(m_pinClk, m_pullUp ? INPUT_PULLUP : INPUT);
 	bitDelay();
-	pinMode(m_pinDIO, INPUT);
+	pinMode(m_pinDIO, m_pullUp ? INPUT_PULLUP : INPUT);
 	bitDelay();
 }
 
@@ -210,14 +259,14 @@ bool TM1637Display::writeByte(uint8_t b)
 
 	// Set data bit
     if (data & 0x01)
-      pinMode(m_pinDIO, INPUT);
+      pinMode(m_pinDIO, m_pullUp ? INPUT_PULLUP : INPUT);
     else
       pinMode(m_pinDIO, OUTPUT);
 
     bitDelay();
 
 	// CLK high
-    pinMode(m_pinClk, INPUT);
+    pinMode(m_pinClk, m_pullUp ? INPUT_PULLUP : INPUT);
     bitDelay();
     data = data >> 1;
   }
@@ -225,11 +274,11 @@ bool TM1637Display::writeByte(uint8_t b)
   // Wait for acknowledge
   // CLK to zero
   pinMode(m_pinClk, OUTPUT);
-  pinMode(m_pinDIO, INPUT);
+  pinMode(m_pinDIO, m_pullUp ? INPUT_PULLUP : INPUT);
   bitDelay();
 
   // CLK to high
-  pinMode(m_pinClk, INPUT);
+  pinMode(m_pinClk, m_pullUp ? INPUT_PULLUP : INPUT);
   bitDelay();
   uint8_t ack = digitalRead(m_pinDIO);
   if (ack == 0)

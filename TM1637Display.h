@@ -38,9 +38,9 @@ public:
   //!
   //! @param pinClk - The number of the digital pin connected to the clock pin of the module
   //! @param pinDIO - The number of the digital pin connected to the DIO pin of the module
-  //! @param bitDelay - The delay, in microseconds, between bit transition on the serial
+  //! @param bitDelay - The delay, in microseconds, between bit transition ¨on the serial
   //!                   bus connected to the display
-  TM1637Display(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay = DEFAULT_BIT_DELAY);
+  TM1637Display(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay = DEFAULT_BIT_DELAY, bool pullUp = false);
 
   //! Sets the brightness of the display.
   //!
@@ -131,6 +131,8 @@ public:
   //! @param pos The position of the most significant digit (0 - leftmost, 3 - rightmost)
   void showNumberHexEx(uint16_t num, uint8_t dots = 0, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
 
+  void showNumberText(const char *str);
+
   //! Translate a single digit into 7 segment code
   //!
   //! The method accepts a number between 0 - 15 and converts it to the
@@ -157,10 +159,11 @@ protected:
 
 
 private:
-	uint8_t m_pinClk;
-	uint8_t m_pinDIO;
+	const uint8_t m_pinClk;
+	const uint8_t m_pinDIO;
 	uint8_t m_brightness;
-	unsigned int m_bitDelay;
+	const unsigned int m_bitDelay;
+  const bool m_pullUp;
 };
 
 #endif // __TM1637DISPLAY__
