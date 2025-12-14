@@ -227,7 +227,8 @@ uint8_t TM1637DisplayBase::encodeDigit(uint8_t digit)
 
 bool TM1637DisplayBase::writeByte(uint8_t b)
 {
-  static uint8_t bs[1] = { b };
+  static uint8_t bs[1];
+  bs[0] = b;
   return writeBytes(bs, 1);
 }
 
