@@ -18,6 +18,7 @@
 #define __TM1637DISPLAY__
 
 #include <inttypes.h>
+#include <Wire.h>
 
 #define SEG_A   0b00000001
 #define SEG_B   0b00000010
@@ -30,17 +31,14 @@
 
 #define DEFAULT_BIT_DELAY  100
 
-class TM1637Display {
+class TM1637DisplayBase {
 
 public:
   //! Initialize a TM1637Display object, setting the clock and
   //! data pins.
-  //!
-  //! @param pinClk - The number of the digital pin connected to the clock pin of the module
-  //! @param pinDIO - The number of the digital pin connected to the DIO pin of the module
-  //! @param bitDelay - The delay, in microseconds, between bit transition ¨on the serial
-  //!                   bus connected to the display
-  TM1637Display(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay = DEFAULT_BIT_DELAY, bool pullUp = false);
+  TM1637DisplayBase();
+
+  virtual ~TM1637DisplayBase() = default;
 
   //! Sets the brightness of the display.
   //!
@@ -63,7 +61,7 @@ public:
   //! @param segments An array of size @ref length containing the raw segment values
   //! @param length The number of digits to be modified
   //! @param pos The position from which to start the modification (0 - leftmost, 3 - rightmost)
-  void setSegments(const uint8_t segments[], uint8_t length = 4, uint8_t pos = 0);
+  void setSegments(const uint8_t *segments, uint8_t length = 4, uint8_t pos = 0);
 
   //! Clear the display
   void clear();
@@ -145,25 +143,74 @@ public:
   static uint8_t encodeDigit(uint8_t digit);
 
 protected:
-   void bitDelay();
 
-   void start();
+  bool writeByte(uint8_t b);
 
-   void stop();
+  virtual bool writeBytes(const uint8_t *bs, uint8_t length) = 0;
 
-   bool writeByte(uint8_t b);
-
-   void showDots(uint8_t dots, uint8_t* digits);
+  void showDots(uint8_t dots, uint8_t* digits);
    
-   void showNumberBaseEx(int8_t base, uint16_t num, uint8_t dots = 0, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
+  void showNumberBaseEx(int8_t base, uint16_t num, uint8_t dots = 0, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
 
 
 private:
-	const uint8_t m_pinClk;
-	const uint8_t m_pinDIO;
 	uint8_t m_brightness;
-	const unsigned int m_bitDelay;
-  const bool m_pullUp;
+};
+
+class TM1637DisplaySW : public TM1637DisplayBase {
+public:
+  //! Initialize a TM1637Display object, setting the clock and
+  //! data pins.
+  //!
+  //! @param pinClk - The number of the digital pin connected to the clock pin of the module
+  //! @param pinDIO - The number of the digital pin connected to the DIO pin of the module
+  //! @param bitDelay - The delay, in microseconds, between bit transition ¨on the serial
+  //!                   bus connected to the display
+  TM1637DisplaySW(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay = DEFAULT_BIT_DELAY);
+
+  ~TM1637DisplaySW() override = default;
+
+protected:
+  void start();
+
+  void stop();
+
+  bool writeBytes(const uint8_t *bs, uint8_t length) override;
+
+  void bitDelay();
+
+private:
+  const uint8_t m_pinClk;
+  const uint8_t m_pinDIO;
+  const unsigned int m_bitDelay;
+};
+
+class TM1637DisplaySWPU : public TM1637DisplayBase {
+public:
+  //! Initialize a TM1637Display object, setting the clock and
+  //! data pins.
+  //!
+  //! @param pinClk - The number of the digital pin connected to the clock pin of the module
+  //! @param pinDIO - The number of the digital pin connected to the DIO pin of the module
+  //! @param bitDelay - The delay, in microseconds, between bit transition ¨on the serial
+  //!                   bus connected to the display
+  TM1637DisplaySWPU(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay = DEFAULT_BIT_DELAY);
+
+  ~TM1637DisplaySWPU() override = default;
+
+protected:
+  void start();
+
+  void stop();
+
+  bool writeBytes(const uint8_t *bs, uint8_t length) override;
+
+  void bitDelay();
+
+private:
+  const uint8_t m_pinClk;
+  const uint8_t m_pinDIO;
+  const unsigned int m_bitDelay;
 };
 
 #endif // __TM1637DISPLAY__
