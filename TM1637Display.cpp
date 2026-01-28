@@ -53,7 +53,19 @@ const uint8_t digitToSegment[] = {
   0b00111001,    // C
   0b01011110,    // d
   0b01111001,    // E
-  0b01110001     // F
+  0b01110001,    // F
+  0b01111101,    // g
+  0b01110110,    // H
+  0b00000110,    // I
+  0b00011110,    // J
+  0b00000000,    // K
+  0b00111000,    // L
+  0b00000000,    // M
+  0b01010100,    // n
+  0b01011100,    // o
+  0b01110011,    // P
+
+
   };
 
 static const uint8_t minusSegments = 0b01000000;
@@ -162,7 +174,7 @@ void TM1637DisplayBase::showNumberBaseEx(int8_t base, uint16_t num, uint8_t dots
 }
 
 void TM1637DisplayBase::showNumberText(const char *str) {
-  static uint8_t segments[4] = {0, 0, 0, 0};
+  uint8_t segments[4] = {0, 0, 0, 0};
 
   for (int i = 0; i < 4 && *str != 0; ++i, ++str) {
     char c = *str;
@@ -195,11 +207,11 @@ void TM1637DisplayBase::showNumberText(const char *str) {
     }
 
     // Support hex letters A-F / a-f as digits if needed
-    if (c >= 'A' && c <= 'F') {
+    if (c >= 'A' && c <= 'P') {
       segments[i] = encodeDigit(static_cast<uint8_t>(10 + (c - 'A')));
       continue;
     }
-    if (c >= 'a' && c <= 'f') {
+    if (c >= 'a' && c <= 'p') {
       segments[i] = encodeDigit(static_cast<uint8_t>(10 + (c - 'a')));
       continue;
     }
@@ -222,7 +234,7 @@ void TM1637DisplayBase::showDots(uint8_t dots, uint8_t* digits)
 
 uint8_t TM1637DisplayBase::encodeDigit(uint8_t digit)
 {
-	return digitToSegment[digit & 0x0f];
+	return digitToSegment[digit];
 }
 
 bool TM1637DisplayBase::writeByte(uint8_t b)
