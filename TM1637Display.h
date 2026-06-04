@@ -142,6 +142,13 @@ public:
   //!         bit 6 - segment G; bit 7 - always zero)
   static uint8_t encodeDigit(uint8_t digit);
 
+  //! Encode a display string into raw 7-segment bytes — same mapping as
+  //! showNumberText, but WITHOUT writing to the display (for building/animating frames).
+  //!
+  //! @param str The text to encode (digits, '-', '.', ' ', hex letters)
+  //! @param segments Output array of 4 bytes, one per digit
+  static void encodeText(const char *str, uint8_t segments[4]);
+
 protected:
 
   bool writeByte(uint8_t b);

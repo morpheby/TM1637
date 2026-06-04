@@ -173,8 +173,8 @@ void TM1637DisplayBase::showNumberBaseEx(int8_t base, uint16_t num, uint8_t dots
   setSegments(digits, length, pos);
 }
 
-void TM1637DisplayBase::showNumberText(const char *str) {
-  uint8_t segments[4] = {0, 0, 0, 0};
+void TM1637DisplayBase::encodeText(const char *str, uint8_t segments[4]) {
+  segments[0] = segments[1] = segments[2] = segments[3] = 0;
 
   for (int i = 0; i < 4 && *str != 0; ++i, ++str) {
     char c = *str;
@@ -219,7 +219,11 @@ void TM1637DisplayBase::showNumberText(const char *str) {
     // Unknown character -> blank
     segments[i] = 0;
   }
+}
 
+void TM1637DisplayBase::showNumberText(const char *str) {
+  uint8_t segments[4];
+  encodeText(str, segments);
   setSegments(segments, 4, 0);
 }
 
